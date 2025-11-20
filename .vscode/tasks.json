@@ -1,0 +1,16 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Apply UI palette updates",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"\"Write-Output 'Applying UI palette updates'\""
+			],
+			"isBackground": false
+		}
+	]
+}

@@ -1,0 +1,43 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: |
+          cd projects/public-backend && npm ci
+          cd ../public-frontend && npm ci
+          cd ../cms-backend && npm ci
+          cd ../cms-frontend && npm ci
+      
+      - name: Build
+        run: |
+          cd projects/public-backend && npm run build
+          cd ../public-frontend && npm run build
+          cd ../cms-backend && npm run build
+          cd ../cms-frontend && npm run build
+      
+      - name: Deploy to server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd /path/to/app
+            git pull
+            ./scripts/deployment/deploy.sh
+

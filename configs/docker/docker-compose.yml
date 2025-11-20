@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: inland-postgres
+    environment:
+      POSTGRES_DB: inland_realestate
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - inland-network
+
+  public-backend:
+    build:
+      context: ../../projects/public-backend
+      dockerfile: Dockerfile
+    container_name: inland-public-backend
+    environment:
+      DATABASE_URL: postgresql://postgres:${DB_PASSWORD:-postgres}@postgres:5432/inland_realestate
+      NODE_ENV: production
+      PORT: 4000
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:4002}
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ../../projects/public-backend/logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - inland-network
+
+  cms-backend:
+    build:
+      context: ../../projects/cms-backend
+      dockerfile: Dockerfile
+    container_name: inland-cms-backend
+    environment:
+      DATABASE_URL: postgresql://postgres:${DB_PASSWORD:-postgres}@postgres:5432/inland_realestate
+      NODE_ENV: production
+      PORT: 4001
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: 7d
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:4003}
+    ports:
+      - "4001:4001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ../../projects/cms-backend/logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - inland-network
+
+volumes:
+  postgres_data:
+
+networks:
+  inland-network:
+    driver: bridge
+

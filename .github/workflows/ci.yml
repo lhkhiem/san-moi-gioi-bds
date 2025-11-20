@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: inland_realestate_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: |
+          cd projects/public-backend && npm ci
+          cd ../public-frontend && npm ci
+          cd ../cms-backend && npm ci
+          cd ../cms-frontend && npm ci
+      
+      - name: Build
+        run: |
+          cd projects/public-backend && npm run build
+          cd ../public-frontend && npm run build
+          cd ../cms-backend && npm run build
+          cd ../cms-frontend && npm run build
+      
+      - name: Run migrations
+        run: |
+          cd projects/public-backend
+          npm run migrate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/inland_realestate_test
+
