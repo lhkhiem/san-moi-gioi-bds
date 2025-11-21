@@ -95,9 +95,7 @@ export default function ProjectsSection() {
   return (
     <ParallaxSection
       backgroundImage="https://images.unsplash.com/photo-1449824913935-59a10b8d2000?q=80&w=2400&auto=format&fit=crop"
-      overlay="dark"
-      fullWidth
-      className="h-screen flex items-center justify-center"
+      className="h-screen flex items-center justify-center before:absolute before:inset-0 before:bg-black/50 before:z-0"
     >
       <div className="relative w-full px-4 sm:px-6 md:px-8 md:pr-20 lg:pr-28 py-4 md:py-6 max-h-[90vh] flex flex-col justify-center">
         <div className="text-center mb-3 md:mb-4">

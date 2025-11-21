@@ -17,6 +17,7 @@ Tài liệu đầy đủ cho dự án Inland Real Estate.
 - [CMS API](./API/cms-api.md) - API cho CMS dashboard
 
 ### Database
+- [Setup Guide](./DATABASE/setup-guide.md) - Hướng dẫn setup database
 - [Schema Documentation](./DATABASE/schema.md) - Database schema
 - [Migrations Guide](./DATABASE/migrations.md) - Hướng dẫn migrations
 

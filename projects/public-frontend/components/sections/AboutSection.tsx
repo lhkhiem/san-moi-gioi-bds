@@ -85,8 +85,8 @@ export default function AboutSection() {
         >
           <div className="inline-block bg-white rounded-xl shadow-lg p-4 md:p-6 max-w-3xl">
             <p className="text-xs md:text-sm lg:text-base text-gray-700 leading-relaxed italic">
-              "Chúng tôi không chỉ bán bất động sản, mà còn xây dựng niềm tin và tạo dựng những giá trị
-              bền vững cho mỗi gia đình Việt. Sự hài lòng của khách hàng chính là thành công của chúng tôi."
+              &ldquo;Chúng tôi không chỉ bán bất động sản, mà còn xây dựng niềm tin và tạo dựng những giá trị
+              bền vững cho mỗi gia đình Việt. Sự hài lòng của khách hàng chính là thành công của chúng tôi.&rdquo;
             </p>
             <div className="mt-3 md:mt-4">
               <p className="font-bold text-gray-900 text-sm md:text-base">CEO - Nguyễn Văn A</p>

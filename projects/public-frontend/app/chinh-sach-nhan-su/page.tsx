@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from 'react'
 import FullpageScroll from '@/components/FullpageScroll'
 import CareersTabs from '@/components/careers/CareersTabs'
 import {
@@ -12,13 +11,11 @@ import {
 } from '@/components/careers/HRPolicySection'
 
 export default function ChinhSachNhanSuPage() {
-  const [currentSection, setCurrentSection] = useState(0)
-
   const sections = [
-    { id: 'tong-quan', label: 'Tổng quan' },
-    { id: 'phuc-loi', label: 'Chính sách phúc lợi' },
-    { id: 'dao-tao', label: 'Đào tạo & phát triển' },
-    { id: 'moi-truong', label: 'Môi trường làm việc' }
+    { id: 'tong-quan', index: 0, title: 'Tổng quan' },
+    { id: 'phuc-loi', index: 1, title: 'Chính sách phúc lợi' },
+    { id: 'dao-tao', index: 2, title: 'Đào tạo & phát triển' },
+    { id: 'moi-truong', index: 3, title: 'Môi trường làm việc' }
   ]
 
   return (
@@ -27,8 +24,6 @@ export default function ChinhSachNhanSuPage() {
       
       <FullpageScroll
         sections={sections}
-        currentSection={currentSection}
-        onSectionChange={setCurrentSection}
       >
         <HRPolicySection id="tong-quan" title="Tổng quan" content={<OverviewSection />} />
         <HRPolicySection id="phuc-loi" title="Chính sách phúc lợi" content={<BenefitsSection />} />
