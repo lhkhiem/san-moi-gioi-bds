@@ -97,3 +97,4 @@ echo "  1. Verify data: psql -U $DB_USER -d $DB_NAME -c 'SELECT COUNT(*) FROM pr
 echo "  2. Start backend: cd projects/public-backend && npm run dev"
 
 
+

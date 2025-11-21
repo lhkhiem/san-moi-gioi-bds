@@ -288,3 +288,4 @@ GRANT ALL PRIVILEGES ON DATABASE inland_realestate TO postgres;
 - [ERD Diagram](./ERD.md)
 
 
+

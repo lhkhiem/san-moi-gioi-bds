@@ -102,3 +102,4 @@ Write-Host "  2. Test connection: npm run dev (in backend folder)"
 Write-Host "  3. Check database: psql -U $DbUser -d $DbName"
 
 
+
