@@ -54,15 +54,15 @@ export const navigationTree: NavItem[] = [
     children: [
       {
         title: "Phân tích thị trường",
-        href: "/goc-nhin-chuyen-gia?section=phan-tich-thi-truong",
+        href: "/goc-nhin-chuyen-gia/danh-muc?category=phan-tich-thi-truong",
       },
       {
         title: "Cẩm nang đầu tư",
-        href: "/goc-nhin-chuyen-gia?section=cam-nang-dau-tu",
+        href: "/goc-nhin-chuyen-gia/danh-muc?category=cam-nang-dau-tu",
       },
       {
         title: "Tin tức FDI",
-        href: "/goc-nhin-chuyen-gia?section=tin-tuc-fdi",
+        href: "/goc-nhin-chuyen-gia/danh-muc?category=tin-tuc-fdi",
       },
     ],
   },
@@ -72,25 +72,27 @@ export const navigationTree: NavItem[] = [
     children: [
       {
         title: "Tin tức Thị trường BĐS Công nghiệp",
-        // href: "/tin-tuc-hoat-dong/thi-truong-bds-cong-nghiep",
-        href: "/tin-tuc-hoat-dong?section=thi-truong-bds",
+        href: "/tin-tuc-hoat-dong/danh-muc?category=thi-truong-bds-cong-nghiep",
       },
-      { title: "Tin tức FDI", href: "/tin-tuc-hoat-dong?section=tin-fdi" },
+      { 
+        title: "Tin tức FDI", 
+        href: "/tin-tuc-hoat-dong/danh-muc?category=tin-tuc-fdi" 
+      },
       {
         title: "Hoạt động Inlandv",
-        href: "/tin-tuc-hoat-dong?section=hoat-dong",
+        // No href - this item is not clickable, only displays submenu
         children: [
           {
             title: "Sự kiện đã tham gia",
-            href: "/tin-tuc-hoat-dong?section=hoat-dong",
+            href: "/tin-tuc-hoat-dong/su-kien-tham-gia",
           },
           {
             title: "Hoạt động CSR",
-            href: "/tin-tuc-hoat-dong?section=hoat-dong",
+            href: "/tin-tuc-hoat-dong/hoat-dong-csr",
           },
           {
             title: "Dự án mới triển khai",
-            href: "/tin-tuc-hoat-dong?section=hoat-dong",
+            href: "/tin-tuc-hoat-dong/du-an-moi",
           },
         ],
       },

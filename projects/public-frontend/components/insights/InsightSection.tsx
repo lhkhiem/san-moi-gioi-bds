@@ -35,7 +35,7 @@ export default function InsightSection({ category, articles, anchorId }: Insight
             {insightCategoryLabels[category]}
           </h2>
           <Link 
-            href={`/goc-nhin-chuyen-gia/${category}`}
+            href={`/goc-nhin-chuyen-gia/danh-muc?category=${category}`}
             className="flex items-center gap-2 text-[#358b4e] font-semibold hover:gap-3 transition-all group"
           >
             <span>Xem tất cả</span>

@@ -35,7 +35,7 @@ export default function NewsActivitySection({ category, articles, anchorId }: Ne
             {newsActivityCategoryLabels[category]}
           </h2>
           <Link 
-            href={`/tin-tuc-hoat-dong/${category}`}
+            href={`/tin-tuc-hoat-dong/danh-muc?category=${category}`}
             className="flex items-center gap-2 text-[#358b4e] font-semibold hover:gap-3 transition-all group"
           >
             <span>Xem tất cả</span>
