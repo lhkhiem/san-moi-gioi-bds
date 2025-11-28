@@ -1,15 +1,17 @@
+
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { motion } from 'framer-motion'
-import { useScrollLock } from '@/hooks/useScrollLock'
-import { useSectionObserver } from '@/hooks/useSectionObserver'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import MouseScrollIcon from './MouseScrollIcon'
+import TimelineNav from '@/components/TimelineNav'
+import { useFullpage, useFullpageInternal, BackgroundType } from '@/components/FullpageContext'
 
 export interface SectionData {
   id: string
   index: number
   title: string
+  backgroundType?: BackgroundType
 }
 
 interface FullpageScrollProps {
@@ -19,6 +21,15 @@ interface FullpageScrollProps {
   debug?: boolean
 }
 
+/**
+ * TRANSFORM-BASED FULLPAGE SCROLL ENGINE
+ * 
+ * Architecture:
+ * - Uses transform: translateY(-index * 100vh) for precise positioning
+ * - Blocks all scroll events during animation
+ * - Enforces integer section indexes (no partial states)
+ * - Prevents bleeding via strict wrapper containment
+ */
 export default function FullpageScroll({ 
   children, 
   sections,
@@ -26,20 +37,56 @@ export default function FullpageScroll({
   debug = false
 }: FullpageScrollProps) {
   const [currentSection, setCurrentSection] = useState(0)
+  const [isAnimating, setIsAnimating] = useState(false)
   const [isInFooterZone, setIsInFooterZone] = useState(false)
+  const [activeBackgroundType, setActiveBackgroundType] = useState<BackgroundType>('light')
+  const { setBackgroundType } = useFullpage()
+  const { setCurrentSection: setContextSection, setTotalSections: setContextTotal, setIsInFooterZone: setContextFooterZone } = useFullpageInternal()
   const touchStartY = useRef<number>(0)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const { lock, isLocked } = useScrollLock(800)
-  
-  // Use IntersectionObserver to track active section
-  const observedIndex = useSectionObserver(sections.length)
+  const wrapperRef = useRef<HTMLDivElement>(null)
+  const animationTimeoutRef = useRef<NodeJS.Timeout>()
   
   const totalSections = children.length
   const isAtLastSection = currentSection === totalSections - 1
-  
-  // Determine if current section has dark background
-  // Section 0 (Hero), Section 2 (Projects), and Section 4 (Contact) have dark backgrounds
-  const isDarkSection = currentSection === 0 || currentSection === 2 || currentSection === 4
+
+  // Debug logging
+  useEffect(() => {
+    console.log('=== FULLPAGE SCROLL INITIALIZED ===')
+    console.log('totalSections:', totalSections)
+    console.log('sections.length:', sections.length)
+    console.log('children:', React.Children.toArray(children).length)
+    console.log('sections:', sections)
+  }, [totalSections, sections, children])
+
+  // Add fullpage-active class on mount, remove on unmount
+  useEffect(() => {
+    document.body.classList.add('fullpage-active')
+    
+    return () => {
+      document.body.classList.remove('fullpage-active')
+      document.body.classList.remove('footer-zone-active')
+    }
+  }, [])
+
+  // Sync with context
+  useEffect(() => {
+    setContextSection(currentSection)
+  }, [currentSection, setContextSection])
+
+  useEffect(() => {
+    setContextTotal(totalSections)
+  }, [totalSections, setContextTotal])
+
+  useEffect(() => {
+    setContextFooterZone(isInFooterZone)
+    
+    // Toggle body class for footer zone
+    if (isInFooterZone) {
+      document.body.classList.add('footer-zone-active')
+    } else {
+      document.body.classList.remove('footer-zone-active')
+    }
+  }, [isInFooterZone, setContextFooterZone])
 
   // Debug logging
   const log = useCallback((...args: any[]) => {
@@ -48,111 +95,144 @@ export default function FullpageScroll({
     }
   }, [debug])
 
-  // Update current section from observer
+  // Update background type
   useEffect(() => {
-    if (!isLocked()) {
-      setCurrentSection(observedIndex)
-      log('Active section updated by observer:', observedIndex)
+    const fromSections = sections[currentSection]?.backgroundType
+    if (fromSections) {
+      setActiveBackgroundType(fromSections)
+      setBackgroundType(fromSections)
+    } else {
+      setActiveBackgroundType('light')
+      setBackgroundType('light')
     }
-  }, [observedIndex, isLocked, log])
+  }, [currentSection, sections, setBackgroundType])
 
+  // Scroll to section with EXACT transform
   const scrollToSection = useCallback((index: number) => {
-    if (index < 0 || index >= totalSections || isLocked()) {
-      log('Scroll blocked:', { index, isLocked: isLocked(), totalSections })
+    // Validate bounds
+    if (index < 0 || index >= totalSections) {
+      log('Scroll blocked: out of bounds', { index, totalSections })
+      return
+    }
+
+    // Block if animating
+    if (isAnimating) {
+      log('Scroll blocked: animation in progress')
       return
     }
 
     log('Scrolling to section:', index)
-    lock()
+    
+    // Set animating state
+    setIsAnimating(true)
     setCurrentSection(index)
 
-    // Use requestAnimationFrame for smoother scroll
-    requestAnimationFrame(() => {
-      const element = document.getElementById(`section-${index}`)
-      if (element) {
-        // Instant scroll to target, rely on CSS scroll-snap
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        log('ScrollIntoView called for section:', index)
-      }
-    })
-  }, [totalSections, isLocked, lock, log])
+    // Clear previous timeout
+    if (animationTimeoutRef.current) {
+      clearTimeout(animationTimeoutRef.current)
+    }
 
-  // Handle wheel events with debounce
+    // Unlock after animation completes (800ms)
+    animationTimeoutRef.current = setTimeout(() => {
+      setIsAnimating(false)
+      log('Animation complete, unlocked')
+    }, 800)
+  }, [totalSections, isAnimating, log])
+
+  // Listen for custom scrollToSection events (from BackToTopButton and HashNavigationHandler)
   useEffect(() => {
-    const handleWheel = (e: WheelEvent) => {
-      const deltaY = e.deltaY
-      
-      // If at last section and scrolling down, scroll directly to bottom (show full footer)
-      if (isAtLastSection && deltaY > 0 && !isInFooterZone) {
-        e.preventDefault()
-        log('At last section, scrolling down - jumping to footer')
-        setIsInFooterZone(true)
-        
-        // Disable scroll snap
-        if (containerRef.current) {
-          containerRef.current.style.scrollSnapType = 'none'
+    const handleScrollToSection = (e: CustomEvent) => {
+      const targetSection = e.detail?.section
+      if (typeof targetSection === 'number') {
+        // Exit footer zone if needed
+        if (isInFooterZone) {
+          setIsInFooterZone(false)
+          window.scrollTo({ top: 0, behavior: 'auto' })
         }
-        
-        // Scroll directly to the bottom of the page to show full footer
-        requestAnimationFrame(() => {
-          window.scrollTo({
-            top: document.documentElement.scrollHeight,
-            behavior: 'smooth'
-          })
-        })
-        return
-      }
-      
-      // If in footer zone and scrolling up, return to section control
-      if (isInFooterZone && deltaY < 0) {
-        e.preventDefault()
-        log('In footer zone, scrolling up - returning to section control')
-        setIsInFooterZone(false)
-        if (containerRef.current) {
-          containerRef.current.style.scrollSnapType = 'y mandatory'
-        }
-        scrollToSection(totalSections - 1)
-        return
-      }
-      
-      // Normal fullpage scroll behavior (sections 0-4)
-      if (!isInFooterZone) {
-        e.preventDefault()
-        
-        if (isLocked()) {
-          log('Wheel event blocked - scroll locked')
-          return
-        }
-
-        if (Math.abs(deltaY) < 5) return // Ignore tiny scrolls
-
-        log('Wheel event:', { deltaY, currentSection })
-
-        if (deltaY > 0) {
-          scrollToSection(currentSection + 1)
-        } else {
-          scrollToSection(currentSection - 1)
-        }
+        scrollToSection(targetSection)
       }
     }
 
+    window.addEventListener('scrollToSection', handleScrollToSection as EventListener)
+    return () => window.removeEventListener('scrollToSection', handleScrollToSection as EventListener)
+  }, [isInFooterZone, scrollToSection])
+
+  // Handle wheel events
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      // Block if animating
+      if (isAnimating) {
+        log('Wheel blocked: animating')
+        e.preventDefault()
+        return
+      }
+
+      // Footer zone handling - enter footer
+      if (isAtLastSection && e.deltaY > 0 && !isInFooterZone) {
+        log('Entering footer zone')
+        e.preventDefault()
+        setIsInFooterZone(true)
+        // Let natural scroll take over by not preventing default after this
+        setTimeout(() => {
+          window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })
+        }, 50)
+        return
+      }
+
+      // If in footer zone, allow natural scroll
+      if (isInFooterZone) {
+        // Check if scrolling back up and at top of footer
+        if (e.deltaY < 0 && window.scrollY <= window.innerHeight + 50) {
+          e.preventDefault()
+          log('Exiting footer zone')
+          setIsInFooterZone(false)
+          window.scrollTo({ top: 0, behavior: 'auto' })
+          scrollToSection(totalSections - 1)
+        }
+        // Otherwise allow natural scroll in footer
+        return
+      }
+
+      // Normal fullpage scroll
+      e.preventDefault()
+      if (Math.abs(e.deltaY) < 5) return
+
+      if (e.deltaY > 0) {
+        scrollToSection(currentSection + 1)
+      } else {
+        scrollToSection(currentSection - 1)
+      }
+    }
+
+    window.addEventListener('wheel', handleWheel, { passive: false })
+    return () => window.removeEventListener('wheel', handleWheel)
+  }, [currentSection, isAnimating, isAtLastSection, isInFooterZone, scrollToSection, totalSections, log])
+
+  // Handle keyboard events
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (isLocked() || isInFooterZone) return
+      if (isAnimating) return
+
+      // If in footer zone
+      if (isInFooterZone) {
+        if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+          e.preventDefault()
+          setIsInFooterZone(false)
+          window.scrollTo({ top: 0, behavior: 'auto' })
+          scrollToSection(totalSections - 1)
+        }
+        return
+      }
 
       switch (e.key) {
         case 'ArrowDown':
         case 'PageDown':
           e.preventDefault()
           if (isAtLastSection) {
-            // Scroll directly to footer bottom
             setIsInFooterZone(true)
-            if (containerRef.current) {
-              containerRef.current.style.scrollSnapType = 'none'
-            }
-            window.scrollTo({
-              top: document.documentElement.scrollHeight,
-              behavior: 'smooth'
-            })
+            setTimeout(() => {
+              window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })
+            }, 50)
           } else {
             scrollToSection(currentSection + 1)
           }
@@ -173,48 +253,41 @@ export default function FullpageScroll({
       }
     }
 
-    // Touch events for mobile
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [currentSection, isAnimating, isAtLastSection, isInFooterZone, scrollToSection, totalSections])
+
+  // Handle touch events
+  useEffect(() => {
     const handleTouchStart = (e: TouchEvent) => {
       touchStartY.current = e.touches[0].clientY
     }
 
     const handleTouchEnd = (e: TouchEvent) => {
-      if (isLocked()) return
+      if (isAnimating) return
 
       const touchEndY = e.changedTouches[0].clientY
       const deltaY = touchStartY.current - touchEndY
 
-      // Minimum swipe distance: 50px
       if (Math.abs(deltaY) > 50) {
-        log('Touch swipe:', { deltaY })
-        
-        // If at last section and swiping up (scrolling down), scroll to footer bottom
+        // Entering footer zone
         if (isAtLastSection && deltaY > 0 && !isInFooterZone) {
-          log('Touch: At last section, swiping up - jumping to footer')
           setIsInFooterZone(true)
-          if (containerRef.current) {
-            containerRef.current.style.scrollSnapType = 'none'
-          }
-          // Scroll directly to bottom
-          window.scrollTo({
-            top: document.documentElement.scrollHeight,
-            behavior: 'smooth'
-          })
+          setTimeout(() => {
+            window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })
+          }, 50)
           return
         }
-        
-        // If in footer zone and swiping down (scrolling up), return to sections
-        if (isInFooterZone && deltaY < 0) {
-          log('Touch: In footer, swiping down - returning to sections')
+
+        // Exiting footer zone
+        if (isInFooterZone && deltaY < 0 && window.scrollY <= window.innerHeight + 50) {
           setIsInFooterZone(false)
-          if (containerRef.current) {
-            containerRef.current.style.scrollSnapType = 'y mandatory'
-          }
+          window.scrollTo({ top: 0, behavior: 'auto' })
           scrollToSection(totalSections - 1)
           return
         }
-        
-        // Normal section navigation
+
+        // Normal fullpage scroll
         if (!isInFooterZone) {
           if (deltaY > 0) {
             scrollToSection(currentSection + 1)
@@ -225,60 +298,91 @@ export default function FullpageScroll({
       }
     }
 
-    const container = containerRef.current
-    if (!container) return
-
-    // Use passive: false to allow preventDefault
-    window.addEventListener('wheel', handleWheel, { passive: false })
-    window.addEventListener('keydown', handleKeyDown)
-    container.addEventListener('touchstart', handleTouchStart, { passive: true })
-    container.addEventListener('touchend', handleTouchEnd, { passive: true })
-
-    return () => {
-      window.removeEventListener('wheel', handleWheel)
-      window.removeEventListener('keydown', handleKeyDown)
-      container.removeEventListener('touchstart', handleTouchStart)
-      container.removeEventListener('touchend', handleTouchEnd)
+    const wrapper = wrapperRef.current
+    if (wrapper) {
+      wrapper.addEventListener('touchstart', handleTouchStart, { passive: true })
+      wrapper.addEventListener('touchend', handleTouchEnd, { passive: true })
+      return () => {
+        wrapper.removeEventListener('touchstart', handleTouchStart)
+        wrapper.removeEventListener('touchend', handleTouchEnd)
+      }
     }
-  }, [currentSection, isLocked, scrollToSection, totalSections, log, isAtLastSection, isInFooterZone])
+  }, [currentSection, isAnimating, isAtLastSection, isInFooterZone, scrollToSection, totalSections])
+
+  // Calculate exact transform
+  const transformY = `translateY(-${currentSection * 100}vh)`
 
   return (
-    <div ref={containerRef} className="relative" style={{ scrollSnapType: 'y mandatory' }}>
-      {/* Timeline Navigation - hide in footer zone */}
+    <div 
+      className="fullpage-scroll-container"
+      style={{
+        position: 'relative',
+        overflow: isInFooterZone ? 'visible' : 'hidden',
+        touchAction: isInFooterZone ? 'auto' : 'none',
+        height: isInFooterZone ? 'auto' : '100vh',
+        minHeight: '100vh',
+        width: '100%'
+      }}
+    >
+      {/* Timeline Navigation */}
       {showIndicators && !isInFooterZone && (
         <TimelineNav
           sections={sections}
           activeSection={currentSection}
           onSectionClick={scrollToSection}
-          isDarkSection={isDarkSection}
+          backgroundType={activeBackgroundType}
         />
       )}
 
-      {/* Sections - all rendered for scroll-snap */}
-      <div className="relative">
-        {children.map((child, index) => (
-          <div
-            key={index}
-            id={`section-${index}`}
-            className="fullpage-section"
-            style={{ scrollSnapAlign: 'start' }}
-            role="region"
-            aria-label={sections[index]?.title || `Section ${index + 1}`}
-          >
-            {child}
-          </div>
-        ))}
+      {/* Sections Wrapper - TRANSFORM-BASED */}
+      <div
+        ref={wrapperRef}
+        className="fullpage-sections-wrapper"
+        style={{
+          transform: transformY,
+          transition: isAnimating ? 'transform 800ms cubic-bezier(0.65, 0, 0.35, 1)' : 'none',
+          willChange: 'transform',
+          position: 'relative',
+          height: `${totalSections * 100}vh`,
+          width: '100%'
+        }}
+      >
+        {children.map((child, index) => {
+          const anchorId = sections[index]?.id || `section-${index}`
+          return (
+            <div
+              key={index}
+              id={anchorId}
+              data-index={index}
+              className="fullpage-section-container"
+              style={{
+                height: '100vh',
+                width: '100%',
+                position: 'absolute',
+                top: `${index * 100}vh`,
+                left: 0,
+                overflow: 'hidden',
+                margin: 0,
+                padding: 0
+              }}
+              role="region"
+              aria-label={sections[index]?.title || `Section ${index + 1}`}
+            >
+              {child}
+            </div>
+          )
+        })}
       </div>
 
-      {/* Mouse Scroll Icon - hide only when in footer zone */}
+      {/* Mouse Scroll Icon */}
       <MouseScrollIcon 
         onClick={() => scrollToSection(currentSection + 1)}
-        isVisible={!isInFooterZone}
-        isDarkSection={isDarkSection}
+        isVisible={!isInFooterZone && !isAtLastSection}
+        backgroundType={activeBackgroundType}
       />
 
       {/* Scroll hint (first section only) */}
-      {currentSection === 0 && (
+      {currentSection === 0 && !isAnimating && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -288,7 +392,7 @@ export default function FullpageScroll({
             repeat: Infinity, 
             repeatType: 'reverse' 
           }}
-          className="fixed bottom-20 left-1/2 -translate-x-1/2 z-30 hidden md:block"
+          className="fixed bottom-20 left-1/2 -translate-x-1/2 z-30 hidden md:block pointer-events-none"
         >
           <div className="flex flex-col items-center gap-2 text-white/80">
             <span className="text-sm font-medium">Scroll</span>
@@ -309,79 +413,5 @@ export default function FullpageScroll({
         </motion.div>
       )}
     </div>
-  )
-}
-
-// Timeline Navigation Component (improved style matching reference)
-interface TimelineNavProps {
-  sections: SectionData[]
-  activeSection: number
-  onSectionClick: (index: number) => void
-  isDarkSection: boolean
-}
-
-function TimelineNav({ sections, activeSection, onSectionClick, isDarkSection }: TimelineNavProps) {
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
-  
-  // Color classes based on section background - using gold colors
-  const lineColor = isDarkSection ? 'bg-goldLight/30' : 'bg-goldDark/20'
-  const labelActiveColor = isDarkSection ? 'text-goldLight' : 'text-goldDark'
-  const labelInactiveColor = isDarkSection ? 'text-goldLight/50' : 'text-goldDark/50'
-  const dotActiveColor = isDarkSection ? 'bg-goldLight' : 'bg-goldDark'
-  const dotInactiveColor = isDarkSection ? 'bg-goldLight/30' : 'bg-goldDark/30'
-
-  // Capitalize first letter only
-  const capitalizeFirst = (str: string) => {
-    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase()
-  }
-
-  return (
-    <nav 
-      className="fixed right-6 md:right-10 top-1/2 -translate-y-1/2 z-50 hidden md:block pointer-events-auto"
-      aria-label="Section navigation"
-    >
-      <div className="relative flex flex-col gap-6">
-        {/* Vertical line connecting dots - positioned to go through center of dots */}
-        <div className={`absolute right-[4px] top-0 bottom-0 w-px ${lineColor} pointer-events-none transition-colors duration-300`} />
-        
-        {sections.map((section, index) => {
-          const isActive = index === activeSection
-          const isHovered = index === hoveredIndex
-
-          return (
-            <button
-              key={section.id}
-              onClick={() => onSectionClick(index)}
-              onMouseEnter={() => setHoveredIndex(index)}
-              onMouseLeave={() => setHoveredIndex(null)}
-              className="relative group flex items-center justify-end gap-3"
-              aria-label={`Go to ${section.title}`}
-              aria-current={isActive ? 'true' : 'false'}
-            >
-              {/* Label text - italic and capitalize first letter only */}
-              <span 
-                className={`
-                  text-xs md:text-sm font-medium italic transition-all duration-300 text-right tracking-wide
-                  ${isActive 
-                    ? `${labelActiveColor} opacity-100 scale-105` 
-                    : `${labelInactiveColor} opacity-60 hover:opacity-100`
-                  }
-                `}
-              >
-                {capitalizeFirst(section.title)}
-              </span>
-
-              {/* Connection dot */}
-              <div 
-                className={`
-                  relative z-10 w-2.5 h-2.5 rounded-full transition-all duration-300
-                  ${isActive ? `${dotActiveColor} scale-125` : `${dotInactiveColor} scale-90`}
-                `}
-              />
-            </button>
-          )
-        })}
-      </div>
-    </nav>
   )
 }

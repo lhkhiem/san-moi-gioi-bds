@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import ParallaxSection from '@/components/ParallaxSection'
 import Link from 'next/link'
 import { MapPin, TrendingUp, ArrowRight } from 'lucide-react'
 import { api } from '@/lib/api'
@@ -93,11 +92,21 @@ export default function ProjectsSection() {
     : projects.filter(p => p.status === activeFilter)
 
   return (
-    <ParallaxSection
-      backgroundImage="https://images.unsplash.com/photo-1449824913935-59a10b8d2000?q=80&w=2400&auto=format&fit=crop"
-      className="h-screen flex items-center justify-center before:absolute before:inset-0 before:bg-black/50 before:z-0"
-    >
-      <div className="relative w-full px-4 sm:px-6 md:px-8 md:pr-20 lg:pr-28 py-4 md:py-6 max-h-[90vh] flex flex-col justify-center">
+    <section className="relative h-screen w-full flex items-center justify-center overflow-hidden">
+      {/* Background Image */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 bg-black/60 z-[5]" />
+        <div
+          className="absolute inset-0 w-full h-full"
+          style={{
+            backgroundImage: 'url(https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1600&q=80)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          }}
+        />
+      </div>
+      {/* Content */}
+      <div className="relative z-20 w-full max-w-[1600px] mx-auto px-8 sm:px-12 md:px-16 lg:px-20 py-4 md:py-6 max-h-[85vh] overflow-y-auto scrollbar-hide flex flex-col justify-center">
         <div className="text-center mb-3 md:mb-4">
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
@@ -232,6 +241,6 @@ export default function ProjectsSection() {
           </Link>
         </motion.div>
       </div>
-    </ParallaxSection>
+    </section>
   )
 }

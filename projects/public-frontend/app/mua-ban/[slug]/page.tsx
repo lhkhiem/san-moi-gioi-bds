@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: `${project.title} - Inland Real Estate`,
       description: project.description,
       openGraph: {
-        images: [project.thumbnail_url],
+        images: project.thumbnail_url ? [{ url: project.thumbnail_url }] : [],
       },
     }
   } catch (error) {
@@ -163,7 +163,7 @@ export default async function ProjectDetailPage({ params }: Props) {
               <div className="bg-white rounded-2xl p-8 shadow">
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">Hình ảnh</h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {project.gallery.map((image, index) => (
+                  {project.gallery.map((image: string, index: number) => (
                     <div key={index} className="relative h-48 rounded-lg overflow-hidden">
                       <div
                         className="w-full h-full bg-cover bg-center hover:scale-110 transition-transform duration-300"

@@ -4,6 +4,7 @@
 $deployDir = "deploy-package"
 $standaloneDir = ".next/standalone"
 $staticDir = ".next/static"
+$serverDir = ".next/server"
 $publicDir = "public"
 
 Write-Host "Chuan bi files de deploy..." -ForegroundColor Green
@@ -14,25 +15,91 @@ if (Test-Path $deployDir) {
 }
 New-Item -ItemType Directory -Path $deployDir | Out-Null
 
-# Copy standalone
+# Kiểm tra và copy standalone (nếu có)
+if (Test-Path $standaloneDir) {
 Write-Host "Copy standalone build..." -ForegroundColor Yellow
 Copy-Item -Recurse -Force "$standaloneDir\*" "$deployDir\"
-
-# Copy static files
-Write-Host "Copy static files..." -ForegroundColor Yellow
+} else {
+    Write-Host "Standalone build khong tim thay, se copy .next/server va .next/static..." -ForegroundColor Yellow
+    
+    # Copy .next/server
+    if (Test-Path $serverDir) {
+        Write-Host "Copy .next/server..." -ForegroundColor Yellow
+        New-Item -ItemType Directory -Path "$deployDir\.next" -Force | Out-Null
+        Copy-Item -Recurse -Force "$serverDir" "$deployDir\.next\"
+    }
+    
+    # Copy .next/static
+    if (Test-Path $staticDir) {
+        Write-Host "Copy .next/static..." -ForegroundColor Yellow
+        if (-not (Test-Path "$deployDir\.next")) {
 New-Item -ItemType Directory -Path "$deployDir\.next" -Force | Out-Null
+        }
 Copy-Item -Recurse -Force "$staticDir" "$deployDir\.next\"
+    }
 
-# Copy public files
+    # Copy các file manifest cần thiết
+    $manifestFiles = @("build-manifest.json", "app-build-manifest.json", "react-loadable-manifest.json")
+    foreach ($file in $manifestFiles) {
+        $sourceFile = ".next\$file"
+        if (Test-Path $sourceFile) {
+            Write-Host "Copy $file..." -ForegroundColor Yellow
+            if (-not (Test-Path "$deployDir\.next")) {
+                New-Item -ItemType Directory -Path "$deployDir\.next" -Force | Out-Null
+            }
+            Copy-Item -Force $sourceFile "$deployDir\.next\"
+        }
+    }
+    
+    # Tạo server.js đơn giản (nếu không có standalone)
+    Write-Host "Tao server.js..." -ForegroundColor Yellow
+    $serverJs = @"
+const { createServer } = require('http')
+const { parse } = require('url')
+const next = require('next')
+
+const dev = process.env.NODE_ENV !== 'production'
+const hostname = 'localhost'
+const port = process.env.PORT || 4002
+
+const app = next({ dev, hostname, port })
+const handle = app.getRequestHandler()
+
+app.prepare().then(() => {
+  createServer(async (req, res) => {
+    try {
+      const parsedUrl = parse(req.url, true)
+      await handle(req, res, parsedUrl)
+    } catch (err) {
+      console.error('Error occurred handling', req.url, err)
+      res.statusCode = 500
+      res.end('internal server error')
+    }
+  }).listen(port, (err) => {
+    if (err) throw err
+    console.log(`> Ready on http://` + hostname + `:` + port)
+  })
+})
+"@
+    $serverJs | Out-File -FilePath "$deployDir\server.js" -Encoding UTF8 -NoNewline
+    
+    # Copy package.json và cài dependencies
+    Write-Host "Copy package.json..." -ForegroundColor Yellow
+    Copy-Item -Force "package.json" "$deployDir\"
+}
+
+# Copy public files (nếu chưa copy trong standalone)
+if (-not (Test-Path "$deployDir\public")) {
 Write-Host "Copy public assets..." -ForegroundColor Yellow
 Copy-Item -Recurse -Force "$publicDir" "$deployDir\"
+}
 
 # Tạo file .env.example
 Write-Host "Tao .env.example..." -ForegroundColor Yellow
 $envContent = @"
 NODE_ENV=production
 PORT=4002
-NEXT_PUBLIC_API_URL=https://your-api-url.com/api
+NEXT_PUBLIC_API_URL=http://localhost:4000/api
 "@
 $envContent | Out-File -FilePath "$deployDir\.env.example" -Encoding UTF8 -NoNewline
 

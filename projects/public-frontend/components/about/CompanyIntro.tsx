@@ -2,8 +2,10 @@
 
 import { motion } from 'framer-motion'
 import { Building2, Users, TrendingUp, Award } from 'lucide-react'
+import { useSectionReveal } from '@/hooks/useSectionReveal'
 
 export default function CompanyIntro() {
+  const revealed = useSectionReveal(3) // Section index in gioi-thieu page
   return (
     <section className="relative h-screen w-full flex items-center justify-center overflow-hidden bg-white">
       <div className="w-full max-w-7xl mx-auto px-6 md:px-12 py-12">
@@ -11,9 +13,8 @@ export default function CompanyIntro() {
           {/* Left: Text Content */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            animate={revealed ? { opacity: 1, x: 0 } : { opacity: 0, x: -50 }}
             transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
             className="space-y-6"
           >
             <div className="inline-block px-4 py-2 bg-goldLight/10 rounded-full mb-4">
@@ -96,9 +97,8 @@ export default function CompanyIntro() {
           {/* Right: Image */}
           <motion.div
             initial={{ opacity: 0, x: 50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            viewport={{ once: true }}
+            animate={revealed ? { opacity: 1, x: 0 } : { opacity: 0, x: 50 }}
+            transition={{ duration: 0.8, delay: revealed ? 0.2 : 0 }}
             className="relative h-[500px] rounded-2xl overflow-hidden shadow-2xl"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-goldDark/20 to-transparent z-10" />

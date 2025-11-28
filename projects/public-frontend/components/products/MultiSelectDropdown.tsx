@@ -12,6 +12,9 @@ export default function MultiSelectDropdown({
   disabled = false,
   display = 'summary',
   showLabel = true,
+  isOpen,
+  onOpen,
+  onClose,
 }: {
   label: string
   options: Array<{ label: string; value: string }>
@@ -21,15 +24,54 @@ export default function MultiSelectDropdown({
   disabled?: boolean
   display?: 'tags' | 'summary'
   showLabel?: boolean
+  isOpen?: boolean
+  onOpen?: () => void
+  onClose?: () => void
 }){
-  const [open, setOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
+  const open = isOpen !== undefined ? isOpen : internalOpen
   const ref = useRef<HTMLDivElement>(null)
 
+  const toggleOpen = () => {
+    if (isOpen !== undefined) {
+      if (open) onClose?.()
+      else onOpen?.()
+    } else {
+      setInternalOpen(s => !s)
+    }
+  }
+
+  const closeDropdown = () => {
+    if (isOpen !== undefined) {
+      onClose?.()
+    } else {
+      setInternalOpen(false)
+    }
+  }
+
   useEffect(()=>{
-    const onClick = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false) }
-    window.addEventListener('click', onClick)
-    return () => window.removeEventListener('click', onClick)
-  }, [])
+    if (!open) return
+    
+    const onClick = (e: MouseEvent) => { 
+      if (!ref.current?.contains(e.target as Node)) {
+        if (isOpen !== undefined) {
+          onClose?.()
+        } else {
+          setInternalOpen(false)
+        }
+      }
+    }
+    
+    // Use setTimeout to avoid race condition with button click
+    const timer = setTimeout(() => {
+      document.addEventListener('mousedown', onClick)
+    }, 0)
+    
+    return () => {
+      clearTimeout(timer)
+      document.removeEventListener('mousedown', onClick)
+    }
+  }, [open, isOpen, onClose])
 
   const selected = useMemo(()=> options.filter(o=> values.includes(o.value)), [options, values])
 
@@ -46,7 +88,7 @@ export default function MultiSelectDropdown({
   return (
     <div className={`relative ${disabled? 'opacity-60 pointer-events-none':''}`} ref={ref}>
       {showLabel && (<div className="text-sm text-gray-500 mb-1">{label}</div>)}
-      <button type="button" onClick={()=>setOpen(v=>!v)} className="w-full h-12 px-3 border border-gray-200 rounded-xl bg-white flex items-center justify-between">
+      <button type="button" onClick={toggleOpen} className="w-full h-12 px-3 border border-gray-200 rounded-xl bg-white flex items-center justify-between">
         {display === 'tags' ? (
           <div className="flex gap-2 flex-wrap">
             {selected.length === 0 && (
@@ -91,7 +133,7 @@ export default function MultiSelectDropdown({
           {options.length > 0 && (
             <div className="sticky bottom-0 bg-white border-t border-gray-100 p-2 flex justify-between">
               <button className="text-sm text-gray-600 hover:text-gray-900" onClick={()=>onChange([])}>Bỏ chọn</button>
-              <button className="text-sm text-goldDark font-semibold" onClick={()=>setOpen(false)}>Xong</button>
+              <button className="text-sm text-goldDark font-semibold" onClick={closeDropdown}>Xong</button>
             </div>
           )}
         </div>

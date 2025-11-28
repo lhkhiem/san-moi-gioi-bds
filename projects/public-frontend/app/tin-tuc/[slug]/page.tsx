@@ -22,13 +22,13 @@ export default function NewsDetailPage({ params }: { params: { slug: string } })
       <div className="h-20" />
 
       {/* Hero Image */}
-      <div className="relative h-[400px] md:h-[500px] w-full overflow-hidden">
+      <section data-bg-type="dark" className="relative h-[400px] md:h-[500px] w-full overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center z-0"
           style={{ backgroundImage: `url(${article.thumbnail})` }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-10" />
-      </div>
+      </section>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 -mt-32 relative z-20">
         <motion.article

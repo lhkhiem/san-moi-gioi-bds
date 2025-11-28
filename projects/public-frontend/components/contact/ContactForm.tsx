@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Send, CheckCircle2 } from 'lucide-react'
+import { useSectionReveal } from '@/hooks/useSectionReveal'
 
 interface FormData {
   fullName: string
@@ -20,6 +21,7 @@ interface FormErrors {
 }
 
 export default function ContactForm() {
+  const revealed = useSectionReveal(2) // Section index in lien-he page
   const [formData, setFormData] = useState<FormData>({
     fullName: '',
     phone: '',
@@ -120,8 +122,7 @@ export default function ContactForm() {
       <div className="relative z-10 container mx-auto px-6 md:px-12 lg:px-16 max-w-4xl py-12">
         <motion.div
           initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          animate={revealed ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
           transition={{ duration: 0.8 }}
         >
           {/* Header */}

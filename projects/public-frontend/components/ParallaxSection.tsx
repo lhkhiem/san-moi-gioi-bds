@@ -7,22 +7,33 @@ interface ParallaxSectionProps {
   children: React.ReactNode
   className?: string
   contentClassName?: string
+  overlay?: boolean
+  overlayOpacity?: number
 }
 
-// Duda-style pure CSS parallax: single block, background fixed only on desktop.
-// No transforms, JS scroll listeners, or <img> tags.
+// CSS parallax with overlay support
 export function ParallaxSection({
   backgroundImage,
   children,
   className = '',
   contentClassName = '',
+  overlay = false,
+  overlayOpacity = 0.9,
 }: ParallaxSectionProps) {
   return (
     <section
-      className={`parallax-section relative overflow-hidden bg-center bg-no-repeat bg-cover bg-scroll lg:bg-fixed min-h-[40vh] sm:min-h-[50vh] lg:min-h-[60vh] ${className}`}
+      className={`parallax-section relative overflow-hidden bg-center bg-no-repeat bg-cover bg-scroll lg:bg-fixed min-h-[40vh] ${className}`}
       style={{ backgroundImage: `url(${backgroundImage})` }}
     >
-      <div className={`parallax-inner relative z-10 flex flex-col justify-center items-start w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${contentClassName}`}>
+      {/* Optional overlay */}
+      {overlay && (
+        <div 
+          className="absolute inset-0 bg-white z-[1]"
+          style={{ opacity: overlayOpacity }}
+        />
+      )}
+      
+      <div className={`parallax-inner relative z-10 flex flex-col justify-center items-center w-full ${contentClassName}`}>
         {children}
       </div>
     </section>

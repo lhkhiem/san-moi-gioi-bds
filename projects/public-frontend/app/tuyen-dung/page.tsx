@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Briefcase, Users, ArrowDown } from 'lucide-react'
 import JobTable from '@/components/careers/JobTable'
 import { jobPostings } from '@/lib/careersData'
-import Footer from '@/components/layout/Footer'
 
 export default function TuyenDungPage() {
   const [showContent, setShowContent] = useState(false)
@@ -243,11 +242,6 @@ export default function TuyenDungPage() {
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
-
-        {/* Footer - Always at bottom */}
-        <div className="mt-auto">
-          <Footer />
         </div>
       </div>
     </div>

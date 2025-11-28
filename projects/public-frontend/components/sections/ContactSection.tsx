@@ -114,7 +114,7 @@ export default function ContactSection() {
         />
       </div>
 
-      <div className="relative z-20 w-full max-w-7xl mx-auto px-4 sm:px-6 md:px-8 md:pr-20 lg:pr-28 py-6 md:py-8 max-h-[90vh] flex flex-col justify-center">
+      <div className="relative z-20 w-full max-w-[1600px] mx-auto px-8 sm:px-12 md:px-16 lg:px-20 py-6 md:py-8 max-h-[85vh] overflow-y-auto scrollbar-hide flex flex-col justify-center">
         <div className="text-center mb-4 md:mb-6">
           <motion.h2
             initial={{ opacity: 0, y: 20 }}

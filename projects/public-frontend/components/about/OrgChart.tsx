@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { Building2, Users2, UserCircle2, Briefcase } from 'lucide-react'
+import { useSectionReveal } from '@/hooks/useSectionReveal'
 
 const orgData = [
   {
@@ -37,27 +38,28 @@ const orgData = [
 ]
 
 export default function OrgChart() {
+  const revealed = useSectionReveal(5) // Section index in gioi-thieu page
+
   return (
     <section className="relative h-screen w-full flex items-center justify-center overflow-hidden bg-white">
-      <div className="w-full max-w-7xl mx-auto px-6 md:px-12 py-16">
+      <div className="w-full max-w-[1600px] mx-auto px-8 sm:px-12 md:px-16 lg:px-20 py-6 md:py-8 max-h-[85vh] overflow-y-auto scrollbar-hide flex flex-col justify-center">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          animate={revealed ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
           transition={{ duration: 0.6 }}
-          viewport={{ once: true }}
-          className="text-center mb-12"
+          className="text-center mb-4 md:mb-6"
         >
-          <div className="inline-block px-4 py-2 bg-goldLight/10 rounded-full mb-4">
+          <div className="inline-block px-3 py-1 bg-goldLight/10 rounded-full mb-2">
             <span className="text-goldDark text-sm font-semibold tracking-wide uppercase">
               Cơ cấu tổ chức
             </span>
           </div>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
             Sơ Đồ
             <br />
             <span className="text-goldDark">Tổ Chức</span>
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-sm md:text-base text-gray-600 max-w-2xl mx-auto">
             Đội ngũ chuyên nghiệp với cơ cấu tổ chức rõ ràng và hiệu quả
           </p>
         </motion.div>
@@ -66,14 +68,13 @@ export default function OrgChart() {
           {/* Level 1: Leadership */}
           <motion.div
             initial={{ opacity: 0, y: -30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            viewport={{ once: true }}
-            className="flex justify-center mb-12"
+            animate={revealed ? { opacity: 1, y: 0 } : { opacity: 0, y: -30 }}
+            transition={{ duration: 0.6, delay: revealed ? 0.2 : 0 }}
+            className="flex justify-center mb-6 md:mb-8"
           >
             <div className="relative">
               <div className={`
-                w-72 bg-gradient-to-br ${orgData[0].color} rounded-2xl p-8 shadow-xl
+                w-64 md:w-72 bg-gradient-to-br ${orgData[0].color} rounded-2xl p-6 md:p-8 shadow-xl
                 border-2 border-goldLight/30
               `}>
                 <div className="flex items-center justify-center mb-4">
@@ -94,17 +95,16 @@ export default function OrgChart() {
               </div>
 
               {/* Connection line */}
-              <div className="absolute left-1/2 -translate-x-1/2 top-full w-1 h-12 bg-gradient-to-b from-goldLight to-transparent" />
+              <div className="absolute left-1/2 -translate-x-1/2 top-full w-1 h-8 md:h-10 bg-gradient-to-b from-goldLight to-transparent" />
             </div>
           </motion.div>
 
           {/* Level 2: Departments */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            viewport={{ once: true }}
-            className="grid md:grid-cols-3 gap-6"
+            animate={revealed ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+            transition={{ duration: 0.6, delay: revealed ? 0.4 : 0 }}
+            className="grid md:grid-cols-3 gap-4 md:gap-6"
           >
             {orgData[1].departments?.map((dept, index) => {
               const DeptIcon = dept.icon
@@ -112,16 +112,15 @@ export default function OrgChart() {
               <motion.div
                 key={index}
                 initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: 0.6 + index * 0.1 }}
-                viewport={{ once: true }}
+                animate={revealed ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.5, delay: revealed ? 0.6 + index * 0.1 : 0 }}
                 className="relative"
               >
                 {/* Connection line to parent */}
-                <div className="absolute left-1/2 -translate-x-1/2 bottom-full w-1 h-12 bg-gradient-to-b from-transparent to-goldLight/30" />
+                <div className="absolute left-1/2 -translate-x-1/2 bottom-full w-1 h-8 md:h-10 bg-gradient-to-b from-transparent to-goldLight/30" />
 
                 <div className={`
-                  bg-gradient-to-br ${dept.color} rounded-2xl p-6 shadow-lg
+                  bg-gradient-to-br ${dept.color} rounded-2xl p-5 md:p-6 shadow-lg
                   border border-goldLight/20 hover:shadow-xl transition-shadow
                 `}>
                   <div className="flex items-center justify-center mb-4">
@@ -148,10 +147,9 @@ export default function OrgChart() {
         {/* Additional info */}
         <motion.div
           initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.8 }}
-          viewport={{ once: true }}
-          className="mt-12 text-center"
+          animate={revealed ? { opacity: 1 } : { opacity: 0 }}
+          transition={{ duration: 0.6, delay: revealed ? 0.8 : 0 }}
+          className="mt-6 md:mt-8 text-center"
         >
           <p className="text-gray-600 text-sm">
             Tổng số nhân sự: <span className="font-bold text-goldDark">235+ thành viên</span> chuyên nghiệp

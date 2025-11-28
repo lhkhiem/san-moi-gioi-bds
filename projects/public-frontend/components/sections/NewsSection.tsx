@@ -64,7 +64,7 @@ export default function NewsSection() {
 
   return (
     <section className="h-screen w-full flex items-center justify-center bg-gray-50 overflow-hidden">
-      <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 md:px-8 md:pr-20 lg:pr-28 py-4 md:py-6 max-h-[90vh] flex flex-col justify-center">
+      <div className="w-full max-w-[1600px] mx-auto px-8 sm:px-12 md:px-16 lg:px-20 py-4 md:py-6 max-h-[85vh] overflow-y-auto scrollbar-hide flex flex-col justify-center">
         <div className="text-center mb-3 md:mb-4">
           <motion.h2
             initial={{ opacity: 0, y: 20 }}

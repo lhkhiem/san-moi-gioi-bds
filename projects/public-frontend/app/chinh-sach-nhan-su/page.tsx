@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from 'react'
 import FullpageScroll from '@/components/FullpageScroll'
 import CareersTabs from '@/components/careers/CareersTabs'
 import {
@@ -12,10 +13,10 @@ import {
 
 export default function ChinhSachNhanSuPage() {
   const sections = [
-    { id: 'tong-quan', index: 0, title: 'Tổng quan' },
-    { id: 'phuc-loi', index: 1, title: 'Chính sách phúc lợi' },
-    { id: 'dao-tao', index: 2, title: 'Đào tạo & phát triển' },
-    { id: 'moi-truong', index: 3, title: 'Môi trường làm việc' }
+    { id: 'tong-quan', index: 0, title: 'Tổng quan', backgroundType: 'light' as const },
+    { id: 'phuc-loi', index: 1, title: 'Chính sách phúc lợi', backgroundType: 'light' as const },
+    { id: 'dao-tao', index: 2, title: 'Đào tạo & phát triển', backgroundType: 'light' as const },
+    { id: 'moi-truong', index: 3, title: 'Môi trường làm việc', backgroundType: 'light' as const }
   ]
 
   return (

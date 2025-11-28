@@ -2,7 +2,10 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import Header from '@/components/layout/Header'
-import BackToTopButton from '@/components/common/BackToTopButton'
+import Footer from '@/components/layout/Footer'
+import BackToTopMount from '@/components/layout/BackToTopMount'
+import { FullpageProvider } from '@/components/FullpageContext'
+import { LayoutMeasurementsProvider } from '@/components/LayoutMeasurementsContext'
 
 const inter = Inter({ 
   subsets: ['latin', 'vietnamese'],
@@ -61,11 +64,17 @@ export default function RootLayout({
   return (
     <html lang="vi" className={inter.variable}>
       <body className={inter.className}>
-        <Header />
-        <main>
-          {children}
-        </main>
-        <BackToTopButton />
+        <LayoutMeasurementsProvider>
+          <FullpageProvider>
+            <Header />
+            <main>
+              {children}
+            </main>
+            <Footer />
+            {/* Movetop: fullpage uses its own; normal scroll uses dedicated module */}
+            <BackToTopMount />
+          </FullpageProvider>
+        </LayoutMeasurementsProvider>
       </body>
     </html>
   )

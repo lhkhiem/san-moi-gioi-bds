@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
+  output: 'standalone', // Tạo standalone build để deploy
   images: {
     remotePatterns: [
       {
@@ -16,4 +16,3 @@ const nextConfig = {
 }
 
 module.exports = nextConfig
-
